@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mérida Map and Climate Change Awareness</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #e0f7fa; /* Light cyan background */
+        }
+        h1 {
+            color: #00796b; /* Darker teal color */
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+        #map {
+            width: 100%;
+            height: 400px;
+            max-width: 600px;
+            margin: 20px auto;
+            border: 2px solid #00796b; /* Border for the map */
+            border-radius: 10px; /* Rounded corners */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Shadow effect */
+        }
+        .climate-message {
+            text-align: center;
+            background-color: #b2dfdb; /* Light teal background */
+            padding: 15px;
+            border-radius: 5px;
+            max-width: 600px;
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+        .button-container {
+            margin-bottom: 10px;
+            display: flex; /* Flexbox for button alignment */
+            gap: 10px; /* Space between buttons */
+        }
+        .map-button {
+            padding: 10px 15px;
+            background-color: #00796b; /* Darker teal for buttons */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s, transform 0.2s; /* Transition effects */
+        }
+        .map-button:hover {
+            background-color: #004d40; /* Darker shade on hover */
+            transform: translateY(-2px); /* Lift effect */
+        }
+        .info-section {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff; /* White background for info sections */
+            padding: 15px;
+            border-radius: 10px; /* Rounded corners */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Light shadow */
+        }
+        .image {
+            width: 100%;
+            border-radius: 10px;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto; /* Responsive chart */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Mérida Map - Climate Change Awareness</h1>
+
+    <div class="button-container">
+        <button class="map-button" id="heat-areas-btn">Toggle Heat Areas</button>
+        <button class="map-button" id="green-zone-areas-btn">Toggle Green Areas</button>
+        <button class="map-button" id="pollution-areas-btn">Toggle Pollution Areas</button>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="climate-message">
+        <p><strong>Climate Change Alert:</strong> Mérida is experiencing increased heat waves and environmental changes. Protect our planet by reducing carbon emissions, saving energy, and supporting sustainable practices.</p>
+    </div>
+
+    <div class="info-section">
+        <h2>Temperature Trends in Mérida</h2>
+        <canvas id="temperatureChart"></canvas>
+        <p>This chart displays the average temperature trends in Mérida over the past year, illustrating the increasing heat intensity.</p>
+    </div>
+
+    <div class="info-section">
+        <h2>Heat Zones in Mérida</h2>
+        <img src="https://lectormx.com/wp-content/uploads/2024/01/IMG-20240114-WA0089.jpg" alt="Expectation of forest cover reduction in Yucatan in 21 years" class="image">
+        <p>Picture got from: https://lectormx.com/2024/01/14/asi-se-redujo-la-capa-forestal-de-yucatan-en-21-anos/</p>
+    </div>
+
+    <div class="info-section">
+        <h2>Impact of Urbanization</h2>
+        <canvas id="urbanizationImpactChart"></canvas>
+        <p>This chart represents the correlation between urbanization and temperature increase in Mérida, showcasing the effects of concrete surfaces.</p>
+    </div>
+
+    <div class="info-section">
+        <h2>Forest Cover Reduction in Yucatán</h2>
+        <canvas id="forestCoverChart"></canvas>
+        <p>This chart shows the decline in forest cover in Yucatán over the past 21 years, highlighting the impact of deforestation on climate.</p>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Create the map
+        var map = L.map('map').setView([20.9674, -89.5926], 12);
+    
+        // Base layer: Satellite imagery
+        var satellite = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+        }).addTo(map);
+    
+        // Example overlay: Heat areas as circles
+        var heatAreas = [
+        L.rectangle([[21.03712604655488, -89.63821047456761], [21.012663108607992, -89.59552931969513]], {
+                color: 'red',
+                weight: 1,
+                fillOpacity: 0.5
+            }).bindPopup('Main North zones'),
+
+            L.circle([20.992988424494882, -89.62495541756677], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 800 // Radius in meters
+            }).bindPopup('Center zones'),
+    
+            L.circle([21.021946694966058, -89.55691141854372], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 400 // Radius in meters
+            }).bindPopup('Certain Northeast zones'),
+
+            L.circle([20.960598330276742, -89.57759145653979], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 400 // Radius in meters
+            }).bindPopup('Certain east zones'),
+
+            L.circle([20.997686277701966, -89.58300333320756], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 600 // Radius in meters
+            }).bindPopup('Certain center-east zones'),
+
+            L.circle([21.07910590837565, -89.65898864092286], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 600 // Radius in meters
+            }).bindPopup('Far north zones'),
+            
+            L.circle([21.012644195227075, -89.68197407456641], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 600 // Radius in meters
+            }).bindPopup('Certain west zones'),
+            
+            L.circle([20.964323722973653, -89.6213906004569], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 600 // Radius in meters
+            }).bindPopup('Main Center zones'),
+            
+            L.circle([21.057041205028725, -89.59773614958175], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 400 // Radius in meters
+            }).bindPopup('Far North zones'),
+        ];
+
+        // Example overlay: Pollution areas as circles
+        var pollutionAreas = [
+            L.circle([20.969294329498187, -89.6211079152755], {
+                color: 'orange',
+                fillColor: '#ffcc00',
+                fillOpacity: 0.5,
+                radius: 500 // Radius in meters
+            }).bindPopup('Main center zone'),
+
+            L.circle([20.936353377687297, -89.63656811508498], {
+                color: 'orange',
+                fillColor: '#ffcc00',
+                fillOpacity: 0.5,
+                radius: 2000 // Radius in meters
+            }).bindPopup('Many south zones'),
+
+            L.circle([21.07240050156144, -89.66382147781871], {
+                color: 'orange',
+                fillColor: '#ffcc00',
+                fillOpacity: 0.5,
+                radius: 300 // Radius in meters
+            }).bindPopup('Pamplonas facilities'),
+        ];
+        
+        // Example overlay: Green zones as circles
+        var greenZones = [
+            L.rectangle([[20.943527599137315, -89.66298937146136], [20.915739315258406, -89.63496965059069]], {
+                color: 'green',
+                weight: 1,
+                fillOpacity: 0.5
+            }).bindPopup('South zones'),
+
+            L.rectangle([[20.96143621311697, -89.69397205691091], [20.95732024820948, -89.68539298507129]], {
+                color: 'green',
+                weight: 1,
+                fillOpacity: 0.5
+            }).bindPopup('Southwest zones'),
+
+            L.rectangle([[20.90905139915994, -89.646610943171], [20.9063253028839, -89.62669822487156]], {
+                color: 'green',
+                weight: 1,
+                fillOpacity: 0.5
+            }).bindPopup('South zones'),
+
+            L.rectangle([[20.9320577434757, -89.61187748754908], [20.918509031715818, -89.59694294882449]], {
+                color: 'green',
+                weight: 1,
+                fillOpacity: 0.5
+            }).bindPopup('Southeast zone'),
+
+            L.rectangle([[20.95747744628512, -89.66164137274474], [20.956145247239302, -89.66000328160459]], {
+                color: 'green',
+                weight: 1,
+                fillOpacity: 0.5
+            }).bindPopup('Japanese park'),
+
+            L.rectangle([[20.97579321400446, -89.59888538007628], [20.97365671303096, -89.59218963311977]], {
+                color: 'green',
+                weight: 1,
+                fillOpacity: 0.5
+            }).bindPopup('Center zones'),
+
+            L.rectangle([[20.988792966586, -89.6334133668966], [20.986964422335806, -89.6319397246577]], {
+                color: 'green',
+                weight: 1,
+                fillOpacity: 0.5
+            }).bindPopup('Americas'),
+        ];
+        
+        // Initialize visibility states
+        var heatVisible = false;
+        var greenVisible = false;
+        var pollutionVisible = false;
+
+        // Event listeners for buttons
+        document.getElementById('heat-areas-btn').addEventListener('click', function () {
+            heatVisible = !heatVisible;
+            heatAreas.forEach(area => heatVisible ? area.addTo(map) : map.removeLayer(area));
+            if (greenVisible) {
+                greenZones.forEach(area => map.removeLayer(area));
+                greenVisible = false;
+            }
+            if (pollutionVisible) {
+                pollutionAreas.forEach(area => map.removeLayer(area));
+                pollutionVisible = false;
+            }
+        });
+
+        document.getElementById('green-zone-areas-btn').addEventListener('click', function () {
+            greenVisible = !greenVisible;
+            greenZones.forEach(area => greenVisible ? area.addTo(map) : map.removeLayer(area));
+            if (heatVisible) {
+                heatAreas.forEach(area => map.removeLayer(area));
+                heatVisible = false;
+            }
+            if (pollutionVisible) {
+                pollutionAreas.forEach(area => map.removeLayer(area));
+                pollutionVisible = false;
+            }
+        });
+
+        document.getElementById('pollution-areas-btn').addEventListener('click', function () {
+            pollutionVisible = !pollutionVisible;
+            pollutionAreas.forEach(area => pollutionVisible ? area.addTo(map) : map.removeLayer(area));
+            if (heatVisible) {
+                heatAreas.forEach(area => map.removeLayer(area));
+                heatVisible = false;
+            }
+            if (greenVisible) {
+                greenZones.forEach(area => map.removeLayer(area));
+                greenVisible = false;
+            }
+        });
+
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function () {
+            // Temperature Chart
+            var ctxTemp = document.getElementById('temperatureChart').getContext('2d');
+            var temperatureChart = new Chart(ctxTemp, {
+                type: 'line', // Change the type of chart if necessary
+                data: {
+                    labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'], // Example labels
+                    datasets: [{
+                        label: 'Average Temperature (°C)',
+                        data: [20, 21, 22, 23, 24, 25, 26], // Example data
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Urbanization Impact Chart
+            var ctxUrban = document.getElementById('urbanizationImpactChart').getContext('2d');
+            var urbanizationChart = new Chart(ctxUrban, {
+                type: 'bar', // Change the type of chart if necessary
+                data: {
+                    labels: ['2010', '2011', '2012', '2013', '2014'], // Example labels
+                    datasets: [{
+                        label: 'Urbanization Rate (%)',
+                        data: [30, 32, 35, 37, 40], // Example data
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Forest Cover Chart
+            var ctxForest = document.getElementById('forestCoverChart').getContext('2d');
+            var forestCoverChart = new Chart(ctxForest, {
+                type: 'doughnut', // Change the type of chart if necessary
+                data: {
+                    labels: ['Forest Cover', 'Non-Forest Cover'],
+                    datasets: [{
+                        label: 'Forest Cover Reduction',
+                        data: [60, 40], // Example data
+                        backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 206, 86, 0.2)'],
+                        borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 206, 86, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                }
+            });
+        });
+    </script>
+</body>
+</html>
